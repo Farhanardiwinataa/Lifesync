@@ -1,0 +1,862 @@
+<!-- templates/admin_dashboard.html -->
+{% extends 'base.html' %}
+{% block title %}Dashboard Admin - LifeSync Heart Rate Pemantauan{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<style>
+    .user-indicator {
+        display: flex;
+        align-items: center;
+    }
+    
+    .user-indicator .badge {
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .heart-rate-stats .badge {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.8rem;
+        margin-right: 0.5rem;
+    }
+    
+    .list-group-item {
+        transition: background-color 0.3s ease;
+    }
+    
+    .list-group-item:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+    
+    .view-heart-rate {
+        transition: all 0.3s ease;
+    }
+    
+    .view-heart-rate:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    #no-data-message {
+        color: #6c757d;
+    }
+    
+    #no-data-message i {
+        animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    .permission-badge {
+        cursor: pointer;
+        margin-right: 5px;
+        transition: all 0.2s ease;
+    }
+    
+    .permission-badge:hover {
+        transform: scale(1.05);
+    }
+    
+    .permission-modal .modal-header {
+        background-color: #57b846;
+        color: white;
+    }
+    
+    .user-permission-item {
+        border-bottom: 1px solid #eee;
+        padding: 8px 0;
+    }
+    
+    .user-permission-item:last-child {
+        border-bottom: none;
+    }
+    
+    .permission-tabs .nav-link.active {
+        background-color: #57b846;
+        color: white;
+        border-color: #57b846;
+    }
+    
+    .permission-tabs .nav-link {
+        color: #495057;
+    }
+    
+    .toast-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1050;
+    }
+
+    .patient-data-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .patient-data-card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .blood-type-badge {
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.8rem;
+    }
+
+    .patient-id-badge {
+        background: #6f42c1;
+        color: white;
+        border-radius: 15px;
+        padding: 5px 10px;
+        font-size: 0.8rem;
+        font-family: monospace;
+    }
+
+    .action-buttons .btn {
+        margin: 0 2px;
+    }
+
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .table-actions {
+        white-space: nowrap;
+    }
+
+    .patient-summary-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .patient-summary-card .stat-item {
+        text-align: center;
+    }
+
+    .patient-summary-card .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        display: block;
+    }
+
+    .patient-summary-card .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .bg-pink {
+    background-color: #e83e8c !important;
+    color: white;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-tachometer-alt"></i> Dashboard Admin</h2>
+            <p class="lead">Selamat datang, <strong>{{ user.username }}</strong>! Kelola sistem monitoring heart rate dari sini.</p>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0" style="background: linear-gradient(135deg, #57b846 0%, #4a9b3a 100%);">
+                <div class="card-body text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0"><i class="fas fa-rocket"></i> Quick Actions</h5>
+                            <p class="card-text mb-0">Akses cepat ke fungsi utama sistem</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('add_relation') }}" class="btn btn-light">
+                                <i class="fas fa-user-plus"></i> Tambah Relasi
+                            </a>
+                            <a href="{{ url_for('add_patient_data') }}" class="btn btn-outline-light">
+                                <i class="fas fa-plus"></i> Tambah Data Pasien
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabs for different sections -->
+    <ul class="nav nav-tabs permission-tabs mb-4" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="staff-tab" data-bs-toggle="tab" data-bs-target="#staff" type="button" role="tab" aria-controls="staff" aria-selected="true">
+                <i class="fas fa-user-md mr-1"></i> Staf Medis
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="patients-tab" data-bs-toggle="tab" data-bs-target="#patients" type="button" role="tab" aria-controls="patients" aria-selected="false">
+                <i class="fas fa-procedures mr-1"></i> Data Pasien
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="permissions-tab" data-bs-toggle="tab" data-bs-target="#permissions" type="button" role="tab" aria-controls="permissions" aria-selected="false">
+                <i class="fas fa-user-shield mr-1"></i> Manajemen Izin
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="adminTabsContent">
+        <!-- Staff List Tab -->
+        <div class="tab-pane fade show active" id="staff" role="tabpanel" aria-labelledby="staff-tab">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card patient-data-card">
+                        <div class="card-header text-white d-flex justify-content-between align-items-center" style="background-color: #57b846;">
+                            <h3><i class="fas fa-user-md"></i> Daftar Staf Medis</h3>
+                            <span class="badge bg-light text-dark">{{ users|length }} Staf</span>
+                        </div>
+                        <div class="card-body">
+                            {% if users %}
+                            <div class="list-group list-group-flush">
+                                {% for user_ in users %}
+                                <div id="user-{{ user_.id }}" class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <i class="fas fa-user-md"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1">{{ user_.username }}</h5>
+                                            <small class="text-muted location-time">Staf Medis</small>
+                                            <div class="mt-2">
+                                                <span class="badge bg-info permission-badge" 
+                                                      data-bs-toggle="tooltip" 
+                                                      data-bs-placement="top" 
+                                                      title="Kelola izin monitoring" 
+                                                      onclick="openPermissionModal('{{ user_.id }}', '{{ user_.username }}')">
+                                                    <i class="fas fa-user-shield"></i> Kelola Izin
+                                                </span>
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-briefcase-medical"></i> Staf Medis
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex flex-column align-items-end">
+                                        <span class="badge bg-primary rounded-pill mb-2">
+                                            <i class="fas fa-heartbeat"></i> <span class="heart-rate-status">--</span> BPM
+                                        </span>
+                                        <button class="btn btn-sm btn-outline-primary view-heart-rate" 
+                                                data-user-id="{{ user_.id }}" 
+                                                data-username="{{ user_.username }}">
+                                            <i class="fas fa-chart-line mr-1"></i> Lihat Grafik
+                                        </button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-user-md"></i>
+                                <h4>Belum ada staf medis</h4>
+                                <p>Tambahkan relasi dengan staf medis untuk mulai monitoring</p>
+                                <a href="{{ url_for('add_relation') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Tambah Staf Medis
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Heart Rate Chart Container -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card patient-data-card">
+                        <div class="card-header text-white" style="background-color: #57b846;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h3 id="heart-rate-chart-title"><i class="fas fa-chart-line"></i> Grafik Heart Rate</h3>
+                                <div class="user-indicator" id="heart-rate-user-indicator">
+                                    <span class="badge bg-light text-primary" id="active-user-name">Pilih staf medis</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="no-data-message" class="text-center py-5">
+                                <i class="fas fa-heartbeat fa-3x text-muted mb-3"></i>
+                                <h4>Silakan pilih staf medis untuk melihat data heart rate</h4>
+                                <p class="text-muted">Klik tombol "Lihat Grafik" pada salah satu staf medis di daftar</p>
+                            </div>
+                            <div id="chart-container" style="display: none; height: 300px;">
+                                <canvas id="heartRateChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-outline-primary" id="timeRange1h">1 Jam</button>
+                                    <button type="button" class="btn btn-outline-primary" id="timeRange6h">6 Jam</button>
+                                    <button type="button" class="btn btn-outline-primary" id="timeRange24h">24 Jam</button>
+                                    <button type="button" class="btn btn-outline-primary" id="timeRange7d">7 Hari</button>
+                                </div>
+                                <div class="heart-rate-stats">
+                                    <span class="badge bg-success">Min: <span id="min-heart-rate">--</span> BPM</span>
+                                    <span class="badge bg-primary">Avg: <span id="avg-heart-rate">--</span> BPM</span>
+                                    <span class="badge bg-danger">Max: <span id="max-heart-rate">--</span> BPM</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Patient Data Management Tab -->
+        <div class="tab-pane fade" id="patients" role="tabpanel" aria-labelledby="patients-tab">
+            <!-- Patient Summary Cards -->
+            {% if patients_data %}
+            <div class="patient-summary-card">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="stat-item">
+                            <span class="stat-number">{{ patients_data|length }}</span>
+                            <span class="stat-label">Total Pasien</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-item">
+                            <span class="stat-number">{{ patients_data|selectattr("blood_type")|list|length }}</span>
+                            <span class="stat-label">Dengan Golongan Darah</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-item">
+                            <span class="stat-number">{{ patients_data|selectattr("phone_number")|list|length }}</span>
+                            <span class="stat-label">Dengan Kontak</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card patient-data-card">
+                        <div class="card-header text-white d-flex justify-content-between align-items-center" style="background-color: #57b846;">
+                            <h3><i class="fas fa-procedures"></i> Data Pasien</h3>
+                            <a href="{{ url_for('add_patient_data') }}" class="btn btn-light">
+                                <i class="fas fa-plus"></i> Tambah Data Pasien
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            {% if patients_data %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th><i class="fas fa-id-badge"></i> ID Pasien</th>
+                                            <th><i class="fas fa-id-card"></i> Nama Lengkap</th>
+                                            <th><i class="fas fa-birthday-cake"></i> Tanggal Lahir</th>
+                                            <th><i class="fas fa-venus-mars"></i> Gender</th>
+                                            <th><i class="fas fa-tint"></i> Golongan Darah</th>
+                                            <th><i class="fas fa-phone"></i> Kontak</th>
+                                            <th><i class="fas fa-cogs"></i> Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for patient in patients_data %}
+                                        <tr>
+                                            <td>
+                                                <span class="patient-id-badge">{{ patient.patient_identifier }}</span>
+                                            </td>
+                                            <td>
+                                                <strong>{{ patient.full_name }}</strong>
+                                            </td>
+                                            <td>
+                                                {{ patient.birth_date.strftime('%d/%m/%Y') }}
+                                                <br><small class="text-muted">
+                                                    {% set birth_date = patient.birth_date %}
+                                                    {% set today = moment().today().date() %}
+                                                    {% set age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day)) %}
+                                                    {{ age }} tahun
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ 'primary' if patient.gender == 'Laki-laki' else 'pink' }}">
+                                                    <i class="fas fa-{{ 'mars' if patient.gender == 'Laki-laki' else 'venus' }}"></i>
+                                                    {{ patient.gender }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if patient.blood_type %}
+                                                    <div class="blood-type-badge">{{ patient.blood_type }}</div>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if patient.phone_number %}
+                                                    <i class="fas fa-phone text-success"></i>
+                                                    <small>{{ patient.phone_number }}</small>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="table-actions">
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{{ url_for('view_patient_data', patient_id=patient.id) }}" 
+                                                    class="btn btn-outline-primary" 
+                                                    data-bs-toggle="tooltip" 
+                                                    title="Lihat Detail">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{{ url_for('edit_patient_data', patient_id=patient.id) }}" 
+                                                    class="btn btn-outline-warning"
+                                                    data-bs-toggle="tooltip" 
+                                                    title="Edit Data">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-outline-danger delete-patient-btn" 
+                                                            data-patient-id="{{ patient.id }}" 
+                                                            data-patient-name="{{ patient.full_name }}" 
+                                                            data-bs-toggle="tooltip" 
+                                                            title="Hapus Data">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-procedures"></i>
+                                <h4>Belum ada data pasien</h4>
+                                <p>Mulai dengan menambahkan data pasien untuk monitoring yang lebih baik</p>
+                                <a href="{{ url_for('add_patient_data') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Tambah Data Pasien
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Permissions Management Tab -->
+        <div class="tab-pane fade" id="permissions" role="tabpanel" aria-labelledby="permissions-tab">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card patient-data-card">
+                        <div class="card-header text-white" style="background-color: #57b846;">
+                            <h3><i class="fas fa-user-shield"></i> Manajemen Izin Pemantauan</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> 
+                                <strong>Informasi:</strong> Kelola izin monitoring untuk menentukan staf medis mana yang dapat memantau pasien tertentu.
+                            </div>
+                            
+                            {% if users %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th><i class="fas fa-user-md"></i> Staf Medis</th>
+                                            <th><i class="fas fa-users"></i> Jumlah Pasien</th>
+                                            <th><i class="fas fa-calendar-alt"></i> Terakhir Aktif</th>
+                                            <th><i class="fas fa-cogs"></i> Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for user_ in users %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                        <i class="fas fa-user-md"></i>
+                                                    </div>
+                                                    <div>
+                                                        <strong>{{ user_.username }}</strong>
+                                                        <br><small class="text-muted">Staf Medis</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary rounded-pill" id="monitor-count-{{ user_.id }}">0</span>
+                                                <small class="text-muted">pasien</small>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">Baru bergabung</small>
+                                            </td>
+                                            <td>
+                                                <button
+                                                    class="btn btn-sm btn-primary" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#permissionModal" 
+                                                    data-user-id="{{ user_.id }}" 
+                                                    data-user-name="{{ user_.username }}">
+                                                    <i class="fas fa-user-shield"></i> Kelola Izin
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-user-shield"></i>
+                                <h4>Belum ada staf medis</h4>
+                                <p>Tambahkan staf medis terlebih dahulu untuk mengelola izin</p>
+                                <a href="{{ url_for('add_relation') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Tambah Staf Medis
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Permission Management Modal -->
+<div class="modal fade permission-modal" id="permissionModal" tabindex="-1" aria-labelledby="permissionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="permissionModalLabel">
+                    <i class="fas fa-user-shield"></i> Kelola Izin Pemantauan Pasien
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="selectedUserId">
+                <div class="alert alert-primary">
+                    <i class="fas fa-info-circle"></i>
+                    <strong id="permissionUserName">Staf Medis: </strong>
+                </div>
+                
+                <div class="mt-4">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-search"></i> Tambah Pasien Baru</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="input-group mb-3">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="patientSearchInput" placeholder="Cari pasien berdasarkan nama atau ID...">
+                                <button class="btn btn-outline-secondary" type="button" id="searchPatientBtn">
+                                    <i class="fas fa-search"></i> Cari
+                                </button>
+                            </div>
+                            
+                            <div id="patientSearchResults" class="list-group mt-3" style="max-height: 200px; overflow-y: auto;">
+                                <!-- Search results will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-procedures"></i> Daftar Pasien yang Dipantau</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="currentPatients" class="list-group">
+                                <!-- Current patients will be populated here -->
+                                <div class="text-center text-muted py-4" id="noPatientsMessage">
+                                    <i class="fas fa-procedures fa-2x mb-2"></i>
+                                    <p>Belum ada pasien yang dipantau</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast-notification">
+    <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" id="notificationToast">
+        <div class="toast-header">
+            <i class="fas fa-bell text-primary me-2"></i>
+            <strong class="me-auto" id="toastTitle">Notification</strong>
+            <small class="text-muted">just now</small>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage">
+            Hello, world! This is a toast message.
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Global variables
+var heartRateChart;
+var currentUserId = null;
+var currentUsername = null;
+var userColorMap = {};
+
+// Initialize tooltips and components
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+      document.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-patient-btn')) {
+            var button = e.target.closest('.delete-patient-btn');
+            var patientId = button.getAttribute('data-patient-id');
+            var patientName = button.getAttribute('data-patient-name');
+            confirmDeletePatient(patientId, patientName);
+        }
+    });
+    
+    initHeartRateChart();
+    setupEventListeners();
+});
+
+function loadUserPatients(userId) {
+    fetch(`/api/user/${userId}/patients`)
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('currentPatients');
+            const noPatientsMessage = document.getElementById('noPatientsMessage');
+            container.innerHTML = '';
+
+            if (data.length === 0) {
+                noPatientsMessage.style.display = 'block';
+                return;
+            }
+
+            noPatientsMessage.style.display = 'none';
+
+            data.forEach(patient => {
+                const item = document.createElement('div');
+                item.className = 'list-group-item';
+                item.innerHTML = `
+                    <strong>${patient.full_name}</strong>
+                    <br><small>ID: ${patient.patient_identifier} | ${patient.gender} | ${patient.birth_date}</small>
+                `;
+                container.appendChild(item);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading user patients:', error);
+        });
+}
+
+// Trigger ketika modal dibuka (reset dan isi data)
+const permissionModal = document.getElementById('permissionModal');
+permissionModal.addEventListener('show.bs.modal', event => {
+    const button = event.relatedTarget;
+    const userId = button.getAttribute('data-user-id');
+    const userName = button.getAttribute('data-user-name');
+
+    document.getElementById('selectedUserId').value = userId;
+    document.getElementById('permissionUserName').innerText = 'Staf Medis: ' + userName;
+
+    loadUserPatients(userId);
+});
+
+function initHeartRateChart() {
+    var ctx = document.getElementById('heartRateChart').getContext('2d');
+    heartRateChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Heart Rate (BPM)',
+                data: [],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    min: 40,
+                    max: 180
+                }
+            }
+        }
+    });
+}
+
+function setupEventListeners() {
+    // Add event listeners here for charts and other functionality
+}
+
+function openPermissionModal(userId, username) {
+    document.getElementById('selectedUserId').value = userId;
+    document.getElementById('permissionUserName').innerHTML = '<i class="fas fa-user-md"></i> Staf Medis: <strong>' + username + '</strong>';
+    
+    document.getElementById('patientSearchResults').innerHTML = '';
+    document.getElementById('patientSearchInput').value = '';
+    
+    loadUserPatients(userId);
+    
+    var permissionModal = new bootstrap.Modal(document.getElementById('permissionModal'));
+    permissionModal.show();
+}
+
+
+
+function loadUserPatients(userId) {
+    // Load patients assigned to this user
+    document.getElementById('currentPatients').innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+    
+    // This would be implemented with your API
+    setTimeout(function() {
+        document.getElementById('currentPatients').innerHTML = '<div class="text-center text-muted py-4" id="noPatientsMessage"><i class="fas fa-procedures fa-2x mb-2"></i><p>Belum ada pasien yang dipantau</p></div>';
+    }, 1000);
+}
+
+function confirmDeletePatient(patientId, patientName) {
+    if (confirm('Apakah Anda yakin ingin menghapus data pasien "' + patientName + '"?\n\nTindakan ini tidak dapat dibatalkan.')) {
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/admin/patient/delete/' + patientId;
+        form.style.display = 'none';
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function showToast(title, message, type) {
+    var toastEl = document.getElementById('notificationToast');
+    var toastTitle = document.getElementById('toastTitle');
+    var toastMessage = document.getElementById('toastMessage');
+    
+    toastTitle.textContent = title;
+    toastMessage.textContent = message;
+    
+    var toast = new bootstrap.Toast(toastEl);
+    toast.show();
+}
+</script>
+<script>
+document.getElementById('permissionModal').addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const userId = button.getAttribute('data-user-id');
+    const userName = button.getAttribute('data-user-name');
+
+    document.getElementById('selectedUserId').value = userId;
+    document.getElementById('permissionUserName').innerText = 'Staf Medis: ' + userName;
+
+    loadUserPatients(userId); // Panggil fungsi ini untuk memuat daftar pasien yang dipantau
+});
+</script>
+ <script>document.getElementById('searchPatientBtn').addEventListener('click', function () {
+    const query = document.getElementById('patientSearchInput').value.trim();
+    if (!query) return;
+    console.log('ambil data dari BE')
+    fetch('/api/patients/search?q=' + encodeURIComponent(query))
+        .then(response => response.json())
+        .then(data => {
+            const resultContainer = document.getElementById('patientSearchResults');
+            resultContainer.innerHTML = ''; // Kosongkan isi sebelumnya
+
+            if (data.length === 0) {
+                resultContainer.innerHTML = '<div class="text-muted text-center">Tidak ada pasien ditemukan</div>';
+                return;
+            }
+
+            data.forEach(patient => {
+                const item = document.createElement('button');
+                item.className = 'list-group-item list-group-item-action';
+                item.innerHTML = `
+                    <strong>${patient.full_name}</strong> 
+                    <br><small>ID: ${patient.patient_identifier} | ${patient.gender} | ${patient.birth_date}</small>
+                `;
+                item.onclick = () => assignPatientToUser(patient.id);
+                resultContainer.appendChild(item);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching patients:', error);
+        });
+});
+
+function assignPatientToUser(patientId) {
+    const userId = document.getElementById('selectedUserId').value;
+
+    fetch('/api/assign_patient', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, patient_id: patientId })
+    })
+    .then(response => {
+        if (response.ok) {
+            showToast('Sukses', 'Pasien berhasil ditambahkan ke staf medis.', 'success');
+            loadUserPatients(userId); // refresh daftar pasien yang dipantau
+        } else {
+            return response.json().then(err => { throw new Error(err.message); });
+        }
+    })
+    .catch(err => {
+        showToast('Gagal', err.message, 'danger');
+    });
+}
+                            </script>
+{% endblock %}
+

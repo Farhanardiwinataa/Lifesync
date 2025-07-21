@@ -1,0 +1,9 @@
+{
+    "name": "Python: app",
+    "type": "python",
+    "request": "launch",
+    "program": "${workspaceFolder}/app.py",
+    "env": {
+        "GEVENT_SUPPORT": "True"
+    }
+}

@@ -1,0 +1,275 @@
+<!-- templates/signup.html -->
+{% extends 'base.html' %}
+{% block title %}Sign Up - LifeSync Heart Rate Pemantauan{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<style>
+    .signup-container {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .signup-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        max-width: 500px;
+        width: 100%;
+    }
+
+    .signup-header {
+        background: linear-gradient(135deg, #57b846 0%, #4a9b3a 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+    }
+
+    .signup-body {
+        padding: 40px;
+    }
+
+    .role-card {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .role-card:hover {
+        border-color: #57b846;
+        background-color: #f8f9fa;
+    }
+
+    .role-card.selected {
+        border-color: #57b846;
+        background-color: #e8f5e8;
+    }
+
+    .role-card .role-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        color: #57b846;
+    }
+
+    .role-card .role-title {
+        font-weight: 600;
+        margin-bottom: 5px;
+        color: #212529;
+    }
+
+    .role-card .role-description {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin: 0;
+    }
+
+    .form-floating {
+        margin-bottom: 20px;
+    }
+
+    .btn-signup {
+        background: linear-gradient(135deg, #57b846 0%, #4a9b3a 100%);
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        width: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .btn-signup:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(87, 184, 70, 0.3);
+        color: white;
+    }
+
+    .info-alert {
+        background: #e3f2fd;
+        border: 1px solid #2196f3;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="signup-container">
+    <div class="signup-card">
+        <div class="signup-header">
+            <h2><i class="fas fa-user-plus"></i> Buat Akun Baru</h2>
+            <p class="mb-0">Bergabung dengan sistem monitoring heart rate</p>
+        </div>
+        
+        <div class="signup-body">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="info-alert">
+                <h6><i class="fas fa-info-circle"></i> Informasi Penting</h6>
+                <ul class="mb-0 small">
+                    <li><strong>Admin:</strong> Mengelola sistem, staf medis, dan data pasien</li>
+                    <li><strong>Staf Medis:</strong> Melakukan monitoring pasien dan melihat data heart rate</li>
+                    <li>Data pasien dibuat terpisah oleh admin tanpa perlu akun</li>
+                </ul>
+            </div>
+
+            <form method="POST" id="signupForm">
+                <div class="form-floating">
+                    <input type="text" class="form-control" id="username" name="username" 
+                           placeholder="Username" required>
+                    <label for="username"><i class="fas fa-user"></i> Username</label>
+                </div>
+
+                <div class="form-floating">
+                    <input type="password" class="form-control" id="password" name="password" 
+                           placeholder="Password" required>
+                    <label for="password"><i class="fas fa-lock"></i> Password</label>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-user-tag"></i> Pilih Role</label>
+                    
+                    <div class="role-card" onclick="selectRole('admin')">
+                        <input type="radio" name="role" value="admin" id="role-admin" style="display: none;">
+                        <div class="text-center">
+                            <div class="role-icon">
+                                <i class="fas fa-user-shield"></i>
+                            </div>
+                            <div class="role-title">Admin</div>
+                            <p class="role-description">
+                                Mengelola sistem, mengatur staf medis, membuat data pasien, 
+                                dan mengatur izin monitoring
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="role-card" onclick="selectRole('user')">
+                        <input type="radio" name="role" value="user" id="role-user" style="display: none;">
+                        <div class="text-center">
+                            <div class="role-icon">
+                                <i class="fas fa-user-md"></i>
+                            </div>
+                            <div class="role-title">Staf Medis</div>
+                            <p class="role-description">
+                                Melakukan monitoring pasien, melihat data heart rate, 
+                                dan mengelola pasien yang dipantau
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning small">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Catatan:</strong> Data pasien tidak memerlukan akun terpisah. 
+                    Admin akan membuat data pasien dan memberikan ID unik untuk monitoring oleh staf medis.
+                </div>
+
+                <button type="submit" class="btn btn-signup">
+                    <i class="fas fa-user-plus"></i> Buat Akun
+                </button>
+
+                <div class="text-center mt-3">
+                    <p class="small text-muted">
+                        Sudah punya akun? 
+                        <a href="{{ url_for('login') }}" class="text-decoration-none">Login di sini</a>
+                    </p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function selectRole(role) {
+    // Remove selected class from all cards
+    document.querySelectorAll('.role-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked card
+    event.currentTarget.classList.add('selected');
+    
+    // Check the corresponding radio button
+    document.getElementById('role-' + role).checked = true;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    document.getElementById('signupForm').addEventListener('submit', function(e) {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const role = document.querySelector('input[name="role"]:checked');
+        
+        if (!username) {
+            e.preventDefault();
+            alert('Username tidak boleh kosong');
+            return false;
+        }
+        
+        if (username.length < 3) {
+            e.preventDefault();
+            alert('Username minimal 3 karakter');
+            return false;
+        }
+        
+        if (password.length < 6) {
+            e.preventDefault();
+            alert('Password minimal 6 karakter');
+            return false;
+        }
+        
+        if (!role) {
+            e.preventDefault();
+            alert('Silakan pilih role');
+            return false;
+        }
+    });
+
+    // Username validation
+    document.getElementById('username').addEventListener('input', function() {
+        const username = this.value;
+        const validPattern = /^[a-zA-Z0-9_]+$/;
+        
+        if (username && !validPattern.test(username)) {
+            this.setCustomValidity('Username hanya boleh mengandung huruf, angka, dan underscore');
+        } else if (username.length > 0 && username.length < 3) {
+            this.setCustomValidity('Username minimal 3 karakter');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+
+    // Password strength indicator
+    document.getElementById('password').addEventListener('input', function() {
+        const password = this.value;
+        let strength = 0;
+        
+        if (password.length >= 6) strength++;
+        if (password.match(/[a-z]/)) strength++;
+        if (password.match(/[A-Z]/)) strength++;
+        if (password.match(/[0-9]/)) strength++;
+        if (password.match(/[^a-zA-Z0-9]/)) strength++;
+        
+        // You can add visual password strength indicator here if needed
+    });
+});
+</script>
+{% endblock %}

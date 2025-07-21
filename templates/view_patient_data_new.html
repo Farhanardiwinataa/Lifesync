@@ -1,0 +1,451 @@
+<!-- templates/view_patient_data_new.html -->
+{% extends 'base.html' %}
+{% block title %}Detail Data Pasien - LifeSync Heart Rate Pemantauan{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<style>
+    .info-section {
+        background: #f8f9fa;
+        border-left: 4px solid #57b846;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 0 5px 5px 0;
+    }
+    
+    .info-section h5 {
+        color: #57b846;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+    
+    .info-item {
+        display: flex;
+        margin-bottom: 10px;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        min-width: 150px;
+        color: #495057;
+    }
+    
+    .info-value {
+        flex: 1;
+        color: #212529;
+    }
+    
+    .bmi-card {
+        background: linear-gradient(45deg, #e3f2fd, #f3e5f5);
+        border: 1px solid #2196f3;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .bmi-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #1976d2;
+    }
+    
+    .age-badge {
+        background: #e8f5e8;
+        color: #2e7d32;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-weight: 600;
+    }
+    
+    .blood-type-badge {
+        background: #ffebee;
+        color: #c62828;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+    
+    .patient-id-badge {
+        background: #6f42c1;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-family: monospace;
+        font-size: 1.1rem;
+    }
+    
+    .empty-value {
+        color: #6c757d;
+        font-style: italic;
+    }
+    
+    @media print {
+        .no-print {
+            display: none;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: none;
+        }
+        
+        .info-section {
+            break-inside: avoid;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header text-white" style="background-color: #57b846;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3><i class="fas fa-user-injured"></i> Detail Data Pasien</h3>
+                        <div class="no-print">
+                            <button onclick="window.print()" class="btn btn-light btn-sm me-2">
+                                <i class="fas fa-print"></i> Cetak
+                            </button>
+                            <a href="{{ url_for('edit_patient_data', patient_id=patient_data.id) }}" class="btn btn-warning btn-sm me-2">
+                                <i class="fas fa-edit"></i> Edit Data
+                            </a>
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-sm">
+                                <i class="fas fa-arrow-left"></i> Kembali
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Patient Header Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <h2 class="mb-2">{{ patient_data.full_name }}</h2>
+                            <div class="d-flex flex-wrap gap-3 mb-3">
+                                <span class="patient-id-badge">
+                                    <i class="fas fa-id-badge"></i>
+                                    {{ patient_data.patient_identifier }}
+                                </span>
+                            </div>
+                            <div class="d-flex flex-wrap gap-3">
+                                <span class="age-badge">
+                                    <i class="fas fa-birthday-cake"></i>
+                                    {% set birth_date = patient_data.birth_date %}
+                                    {% set today = moment().today().date() %}
+                                    {% set age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day)) %}
+                                    {{ age }} tahun
+                                </span>
+                                <span class="badge bg-info">
+                                    <i class="fas fa-venus-mars"></i>
+                                    {{ patient_data.gender }}
+                                </span>
+                                {% if patient_data.blood_type %}
+                                <span class="blood-type-badge">
+                                    <i class="fas fa-tint"></i>
+                                    {{ patient_data.blood_type }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            {% if patient_data.weight and patient_data.height %}
+                            {% set bmi = patient_data.weight / ((patient_data.height / 100) ** 2) %}
+                            <div class="bmi-card">
+                                <div class="bmi-value">{{ "%.1f"|format(bmi) }}</div>
+                                <div class="small">
+                                    {% if bmi < 18.5 %}
+                                        <span class="text-warning">Underweight</span>
+                                    {% elif bmi < 25 %}
+                                        <span class="text-success">Normal</span>
+                                    {% elif bmi < 30 %}
+                                        <span class="text-warning">Overweight</span>
+                                    {% else %}
+                                        <span class="text-danger">Obese</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">Body Mass Index</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Personal Information Section -->
+                    <div class="info-section">
+                        <h5><i class="fas fa-id-card"></i> Informasi Pribadi</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">ID Pasien:</div>
+                                    <div class="info-value"><code>{{ patient_data.patient_identifier }}</code></div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Nama Lengkap:</div>
+                                    <div class="info-value">{{ patient_data.full_name }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Tanggal Lahir:</div>
+                                    <div class="info-value">{{ patient_data.birth_date.strftime('%d %B %Y') }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Jenis Kelamin:</div>
+                                    <div class="info-value">{{ patient_data.gender }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">Nomor Telepon:</div>
+                                    <div class="info-value">
+                                        {% if patient_data.phone_number %}
+                                            <a href="tel:{{ patient_data.phone_number }}">{{ patient_data.phone_number }}</a>
+                                        {% else %}
+                                            <span class="empty-value">Tidak ada data</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Golongan Darah:</div>
+                                    <div class="info-value">
+                                        {% if patient_data.blood_type %}
+                                            <span class="badge bg-danger">{{ patient_data.blood_type }}</span>
+                                        {% else %}
+                                            <span class="empty-value">Tidak ada data</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Alamat:</div>
+                                    <div class="info-value">
+                                        {% if patient_data.address %}
+                                            {{ patient_data.address|nl2br|safe }}
+                                        {% else %}
+                                            <span class="empty-value">Tidak ada data</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Physical Information Section -->
+                    <div class="info-section">
+                        <h5><i class="fas fa-weight"></i> Informasi Fisik</h5>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center p-3 border rounded">
+                                    <div class="h4 text-primary">
+                                        {% if patient_data.weight %}
+                                            {{ patient_data.weight }} kg
+                                        {% else %}
+                                            <span class="empty-value">- kg</span>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">Berat Badan</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3 border rounded">
+                                    <div class="h4 text-primary">
+                                        {% if patient_data.height %}
+                                            {{ patient_data.height }} cm
+                                        {% else %}
+                                            <span class="empty-value">- cm</span>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">Tinggi Badan</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                {% if patient_data.weight and patient_data.height %}
+                                {% set bmi = patient_data.weight / ((patient_data.height / 100) ** 2) %}
+                                <div class="text-center p-3 border rounded">
+                                    <div class="h4">
+                                        {{ "%.1f"|format(bmi) }}
+                                        {% if bmi < 18.5 %}
+                                            <span class="badge bg-warning ms-2">Underweight</span>
+                                        {% elif bmi < 25 %}
+                                            <span class="badge bg-success ms-2">Normal</span>
+                                        {% elif bmi < 30 %}
+                                            <span class="badge bg-warning ms-2">Overweight</span>
+                                        {% else %}
+                                            <span class="badge bg-danger ms-2">Obese</span>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">Body Mass Index (BMI)</small>
+                                </div>
+                                {% else %}
+                                <div class="text-center p-3 border rounded">
+                                    <div class="h4">
+                                        <span class="empty-value">Data tidak lengkap</span>
+                                    </div>
+                                    <small class="text-muted">Body Mass Index (BMI)</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emergency Contact Section -->
+                    <div class="info-section">
+                        <h5><i class="fas fa-phone"></i> Kontak Darurat</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">Nama:</div>
+                                    <div class="info-value">
+                                        {% if patient_data.emergency_contact_name %}
+                                            {{ patient_data.emergency_contact_name }}
+                                        {% else %}
+                                            <span class="empty-value">Tidak ada data</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">Nomor Telepon:</div>
+                                    <div class="info-value">
+                                        {% if patient_data.emergency_contact_phone %}
+                                            <a href="tel:{{ patient_data.emergency_contact_phone }}">{{ patient_data.emergency_contact_phone }}</a>
+                                        {% else %}
+                                            <span class="empty-value">Tidak ada data</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Medical Information Section -->
+                    <div class="info-section">
+                        <h5><i class="fas fa-notes-medical"></i> Informasi Medis</h5>
+                        
+                        <div class="mb-4">
+                            <h6 class="text-primary"><i class="fas fa-history"></i> Riwayat Penyakit</h6>
+                            <div class="p-3 bg-light rounded">
+                                {% if patient_data.medical_history %}
+                                    {{ patient_data.medical_history|nl2br|safe }}
+                                {% else %}
+                                    <span class="empty-value">Tidak ada riwayat penyakit yang tercatat</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-danger"><i class="fas fa-exclamation-triangle"></i> Alergi</h6>
+                                <div class="p-3 bg-light rounded mb-3">
+                                    {% if patient_data.allergies %}
+                                        {{ patient_data.allergies|nl2br|safe }}
+                                    {% else %}
+                                        <span class="empty-value">Tidak ada alergi yang tercatat</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-success"><i class="fas fa-pills"></i> Obat yang Sedang Dikonsumsi</h6>
+                                <div class="p-3 bg-light rounded mb-3">
+                                    {% if patient_data.current_medications %}
+                                        {{ patient_data.current_medications|nl2br|safe }}
+                                    {% else %}
+                                        <span class="empty-value">Tidak ada obat yang sedang dikonsumsi</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Relations Information Section -->
+                    <div class="info-section">
+                        <h5><i class="fas fa-users"></i> Informasi Monitoring</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-info"><i class="fas fa-user-md"></i> Staf Medis yang Memantau</h6>
+                                <div class="p-3 bg-light rounded">
+                                    {% set monitoring_relations = patient_data.user_relations %}
+                                    {% if monitoring_relations %}
+                                        {% for relation in monitoring_relations %}
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px; font-size: 0.8rem;">
+                                                <i class="fas fa-user-md"></i>
+                                            </div>
+                                            <span>{{ relation.user.username }}</span>
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="empty-value">Belum ada staf medis yang memantau</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-secondary"><i class="fas fa-info-circle"></i> Status Monitoring</h6>
+                                <div class="p-3 bg-light rounded">
+                                    {% if monitoring_relations %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-eye"></i> Aktif Dipantau ({{ monitoring_relations|length }} staf)
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-eye-slash"></i> Belum Dipantau
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Information Section -->
+                    <div class="info-section">
+                        <h5><i class="fas fa-info-circle"></i> Informasi Sistem</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">Dibuat pada:</div>
+                                    <div class="info-value">{{ patient_data.created_at.strftime('%d %B %Y, %H:%M') }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Dibuat oleh:</div>
+                                    <div class="info-value">{{ patient_data.created_by_user.username }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">Terakhir diperbarui:</div>
+                                    <div class="info-value">{{ patient_data.updated_at.strftime('%d %B %Y, %H:%M') }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">ID Database:</div>
+                                    <div class="info-value"><code>{{ patient_data.id }}</code></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between mt-4 no-print">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+                        </a>
+                        <div>
+                            <button onclick="window.print()" class="btn btn-info me-2">
+                                <i class="fas fa-print"></i> Cetak Data
+                            </button>
+                            <a href="{{ url_for('edit_patient_data', patient_id=patient_data.id) }}" class="btn btn-warning">
+                                <i class="fas fa-edit"></i> Edit Data
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Patient data view loaded successfully');
+});
+</script>
+{% endblock %}

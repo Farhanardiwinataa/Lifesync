@@ -1,0 +1,307 @@
+<!-- templates/edit_patient_data_new.html -->
+{% extends 'base.html' %}
+{% block title %}Edit Data Pasien - LifeSync Heart Rate Pemantauan{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<style>
+    .form-section {
+        background: #f8f9fa;
+        border-left: 4px solid #57b846;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 0 5px 5px 0;
+    }
+    
+    .form-section h5 {
+        color: #57b846;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+    
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+    }
+    
+    .patient-info {
+        background: #e3f2fd;
+        border: 1px solid #2196f3;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .identifier-readonly {
+        background-color: #f8f9fa;
+        border: 1px dashed #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header text-white" style="background-color: #57b846;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3><i class="fas fa-edit"></i> Edit Data Pasien</h3>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <!-- Patient Info Display -->
+                    <div class="patient-info">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-info-circle"></i> Informasi Pasien</h6>
+                                <p><strong>ID Pasien:</strong> {{ patient_data.patient_identifier }}</p>
+                                <p><strong>Dibuat:</strong> {{ patient_data.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Terakhir diperbarui:</strong> {{ patient_data.updated_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                                <p><strong>Dibuat oleh:</strong> {{ patient_data.created_by_user.username }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="POST" id="patientDataForm">
+                        <!-- Patient Identifier Section -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-id-badge"></i> Identifikasi Pasien</h5>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="mb-3">
+                                        <label for="patient_identifier" class="form-label required-field">ID Pasien</label>
+                                        <input type="text" class="form-control identifier-readonly" id="patient_identifier" 
+                                               name="patient_identifier" value="{{ patient_data.patient_identifier }}" 
+                                               readonly title="ID pasien tidak dapat diubah">
+                                        <div class="form-text">
+                                            <i class="fas fa-lock"></i> ID pasien tidak dapat diubah setelah dibuat
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Personal Information Section -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-id-card"></i> Informasi Pribadi</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="full_name" class="form-label required-field">Nama Lengkap</label>
+                                        <input type="text" class="form-control" id="full_name" name="full_name" 
+                                               value="{{ patient_data.full_name }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="birth_date" class="form-label required-field">Tanggal Lahir</label>
+                                        <input type="date" class="form-control" id="birth_date" name="birth_date" 
+                                               value="{{ patient_data.birth_date.strftime('%Y-%m-%d') }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="gender" class="form-label required-field">Jenis Kelamin</label>
+                                        <select class="form-select" id="gender" name="gender" required>
+                                            <option value="Laki-laki" {{ 'selected' if patient_data.gender == 'Laki-laki' }}>Laki-laki</option>
+                                            <option value="Perempuan" {{ 'selected' if patient_data.gender == 'Perempuan' }}>Perempuan</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="phone_number" class="form-label">Nomor Telepon</label>
+                                        <input type="tel" class="form-control" id="phone_number" name="phone_number" 
+                                               value="{{ patient_data.phone_number or '' }}" placeholder="Contoh: 08123456789">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="blood_type" class="form-label">Golongan Darah</label>
+                                        <select class="form-select" id="blood_type" name="blood_type">
+                                            <option value="">Pilih...</option>
+                                            {% for bt in ['A', 'B', 'AB', 'O', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] %}
+                                            <option value="{{ bt }}" {{ 'selected' if patient_data.blood_type == bt }}>{{ bt }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label for="address" class="form-label">Alamat</label>
+                                        <textarea class="form-control" id="address" name="address" rows="3" 
+                                                  placeholder="Alamat lengkap pasien">{{ patient_data.address or '' }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Physical Information Section -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-weight"></i> Informasi Fisik</h5>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="weight" class="form-label">Berat Badan (kg)</label>
+                                        <input type="number" class="form-control" id="weight" name="weight" 
+                                               step="0.1" min="0" value="{{ patient_data.weight or '' }}" placeholder="Contoh: 65.5">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="height" class="form-label">Tinggi Badan (cm)</label>
+                                        <input type="number" class="form-control" id="height" name="height" 
+                                               step="0.1" min="0" value="{{ patient_data.height or '' }}" placeholder="Contoh: 170">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">BMI (Body Mass Index)</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="bmi_display" readonly placeholder="Akan dihitung otomatis">
+                                            <span class="input-group-text" id="bmi_category">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Emergency Contact Section -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-phone"></i> Kontak Darurat</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="emergency_contact_name" class="form-label">Nama Kontak Darurat</label>
+                                        <input type="text" class="form-control" id="emergency_contact_name" 
+                                               name="emergency_contact_name" value="{{ patient_data.emergency_contact_name or '' }}" 
+                                               placeholder="Nama lengkap">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="emergency_contact_phone" class="form-label">Nomor Telepon Darurat</label>
+                                        <input type="tel" class="form-control" id="emergency_contact_phone" 
+                                               name="emergency_contact_phone" value="{{ patient_data.emergency_contact_phone or '' }}" 
+                                               placeholder="Contoh: 08123456789">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Medical Information Section -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-notes-medical"></i> Informasi Medis</h5>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label for="medical_history" class="form-label">Riwayat Penyakit</label>
+                                        <textarea class="form-control" id="medical_history" name="medical_history" rows="3" 
+                                                  placeholder="Riwayat penyakit, operasi, atau kondisi medis penting lainnya">{{ patient_data.medical_history or '' }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="allergies" class="form-label">Alergi</label>
+                                        <textarea class="form-control" id="allergies" name="allergies" rows="3" 
+                                                  placeholder="Alergi obat, makanan, atau bahan lainnya">{{ patient_data.allergies or '' }}</textarea>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="current_medications" class="form-label">Obat yang Sedang Dikonsumsi</label>
+                                        <textarea class="form-control" id="current_medications" name="current_medications" rows="3" 
+                                                  placeholder="Daftar obat yang sedang dikonsumsi beserta dosisnya">{{ patient_data.current_medications or '' }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Batal
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Simpan Perubahan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // BMI Calculator
+    const weightInput = document.getElementById('weight');
+    const heightInput = document.getElementById('height');
+    const bmiDisplay = document.getElementById('bmi_display');
+    const bmiCategory = document.getElementById('bmi_category');
+
+    function calculateBMI() {
+        const weight = parseFloat(weightInput.value);
+        const height = parseFloat(heightInput.value) / 100; // Convert cm to m
+        
+        if (weight && height) {
+            const bmi = weight / (height * height);
+            bmiDisplay.value = bmi.toFixed(1);
+            
+            // Determine BMI category
+            let category, categoryClass;
+            if (bmi < 18.5) {
+                category = 'Underweight';
+                categoryClass = 'text-warning';
+            } else if (bmi < 25) {
+                category = 'Normal';
+                categoryClass = 'text-success';
+            } else if (bmi < 30) {
+                category = 'Overweight';
+                categoryClass = 'text-warning';
+            } else {
+                category = 'Obese';
+                categoryClass = 'text-danger';
+            }
+            
+            bmiCategory.textContent = category;
+            bmiCategory.className = `input-group-text ${categoryClass}`;
+        } else {
+            bmiDisplay.value = '';
+            bmiCategory.textContent = '-';
+            bmiCategory.className = 'input-group-text';
+        }
+    }
+
+    weightInput.addEventListener('input', calculateBMI);
+    heightInput.addEventListener('input', calculateBMI);
+    
+    // Calculate BMI on page load
+    calculateBMI();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,295 @@
+<!-- templates/add_relation.html -->
+{% extends 'base.html' %}
+
+{% block title %}Tambah Relasi - LifeSync Heart Rate Pemantauan{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<style>
+    .relation-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+    }
+
+    .relation-card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+
+    .role-badge {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+
+    .search-container {
+        position: relative;
+    }
+
+    .search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-top: none;
+        border-radius: 0 0 5px 5px;
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+    }
+
+    .search-result-item {
+        padding: 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        transition: background-color 0.2s;
+    }
+
+    .search-result-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .search-result-item:last-child {
+        border-bottom: none;
+    }
+
+    .patient-info {
+        background: #e3f2fd;
+        border: 1px solid #2196f3;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header text-white" style="background-color: #57b846;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3><i class="fas fa-user-plus"></i> Tambah Relasi</h3>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left"></i> Kembali
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    {% if session.role == 'admin' %}
+                        <!-- Admin: Add User Relation -->
+                        <div class="relation-card">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0"><i class="fas fa-user-md"></i> Tambah Staf Medis</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Admin:</strong> Tambahkan staf medis ke dalam sistem untuk dapat melakukan monitoring pasien.
+                                </div>
+                                
+                                <form method="POST">
+                                    <div class="mb-3">
+                                        <label for="child_username" class="form-label">
+                                            <i class="fas fa-user"></i> Username Staf Medis
+                                        </label>
+                                        <input type="text" class="form-control" id="child_username" name="child_username" 
+                                               placeholder="Masukkan username staf medis" required>
+                                        <div class="form-text">
+                                            Masukkan username staf medis yang sudah terdaftar dengan role 'user'
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                                            <i class="fas fa-times"></i> Batal
+                                        </a>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-plus"></i> Tambah Staf Medis
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                    {% elif session.role == 'user' %}
+                        <!-- User: Add Patient Relation -->
+                        <div class="relation-card">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0"><i class="fas fa-procedures"></i> Tambah Pasien untuk Monitoring</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Staf Medis:</strong> Tambahkan pasien yang akan Anda monitor. Masukkan ID pasien yang telah dibuat oleh admin.
+                                </div>
+
+                                <div class="patient-info">
+                                    <h6><i class="fas fa-lightbulb"></i> Cara Mendapatkan ID Pasien</h6>
+                                    <ul class="mb-0">
+                                        <li>ID pasien dibuat oleh admin saat menambah data pasien</li>
+                                        <li>Tanyakan kepada admin untuk ID pasien yang ingin Anda monitor</li>
+                                        <li>Format ID contoh: <code>john_doe_001</code>, <code>maria_smith_002</code></li>
+                                    </ul>
+                                </div>
+                                
+                                <form method="POST">
+                                    <div class="mb-3 search-container">
+                                        <label for="patient_identifier" class="form-label">
+                                            <i class="fas fa-id-badge"></i> ID Pasien
+                                        </label>
+                                        <input type="text" class="form-control" id="patient_identifier" name="patient_identifier" 
+                                               placeholder="Masukkan ID pasien atau nama untuk mencari..." required>
+                                        <div class="form-text">
+                                            Ketik ID pasien atau nama pasien untuk mencari
+                                        </div>
+                                        <div class="search-results" id="patientSearchResults">
+                                            <!-- Search results will appear here -->
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                                            <i class="fas fa-times"></i> Batal
+                                        </a>
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-plus"></i> Tambah Pasien
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                    {% else %}
+                        <!-- Other roles or no permission -->
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Akses Ditolak:</strong> Anda tidak memiliki izin untuk menambahkan relasi.
+                        </div>
+                    {% endif %}
+
+                    <!-- Information Section -->
+                    <div class="card mt-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-info-circle"></i> Informasi Sistem</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-user-shield"></i> Admin</h6>
+                                    <ul class="small">
+                                        <li>Mengelola staf medis</li>
+                                        <li>Membuat data pasien</li>
+                                        <li>Mengatur izin monitoring</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-user-md"></i> Staf Medis</h6>
+                                    <ul class="small">
+                                        <li>Monitoring pasien</li>
+                                        <li>Melihat data heart rate</li>
+                                        <li>Menambah pasien untuk dipantau</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if we're on user role page and patient search elements exist
+    var patientInput = document.getElementById('patient_identifier');
+    var searchResults = document.getElementById('patientSearchResults');
+    
+    // Only run if elements exist (which means user is on the right page)
+    if (patientInput && searchResults) {
+        var searchTimeout;
+
+        patientInput.addEventListener('input', function() {
+            var query = this.value.trim();
+            
+            clearTimeout(searchTimeout);
+            
+            if (query.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+            
+            searchTimeout = setTimeout(function() {
+                searchPatients(query);
+            }, 300);
+        });
+
+        // Hide search results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-container')) {
+                searchResults.style.display = 'none';
+            }
+        });
+
+        function searchPatients(query) {
+            fetch('/api/patients/search?q=' + encodeURIComponent(query))
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (data.patients && data.patients.length > 0) {
+                        var html = '';
+                        data.patients.forEach(function(patient) {
+                            html += '<div class="search-result-item" data-id="' + patient.patient_identifier + '">' +
+                                    '<div class="d-flex justify-content-between align-items-center">' +
+                                    '<div>' +
+                                    '<strong>' + patient.patient_identifier + '</strong>' +
+                                    '<br><small class="text-muted">' + patient.full_name + ' (' + patient.gender + ')</small>' +
+                                    '</div>' +
+                                    '<small class="text-muted">' + patient.birth_date + '</small>' +
+                                    '</div>' +
+                                    '</div>';
+                        });
+                        searchResults.innerHTML = html;
+                        searchResults.style.display = 'block';
+                        
+                        // Add click handlers
+                        searchResults.querySelectorAll('.search-result-item').forEach(function(item) {
+                            item.addEventListener('click', function() {
+                                var patientId = this.getAttribute('data-id');
+                                patientInput.value = patientId;
+                                searchResults.style.display = 'none';
+                            });
+                        });
+                    } else {
+                        searchResults.innerHTML = '<div class="search-result-item text-muted">Tidak ada pasien ditemukan</div>';
+                        searchResults.style.display = 'block';
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error searching patients:', error);
+                    searchResults.style.display = 'none';
+                });
+        }
+    }
+});
+</script>
+{% endblock %}

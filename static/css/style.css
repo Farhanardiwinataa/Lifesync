@@ -1,0 +1,81 @@
+/* Styling untuk tombol di dashboard orang tua */
+.btn-primary, .btn-info {
+    margin: 5px;
+    padding: 8px 15px;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border: 1px solid #0056b3;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    border: 1px solid #117a8b;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #117a8b;
+    transform: translateY(-2px);
+}
+
+/* Styling untuk list group items */
+.list-group-item {
+    margin-bottom: 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.list-group-item h5 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+/* Styling untuk status lokasi */
+.location-status, .location-time {
+    font-size: 0.9em;
+    color: #666;
+}
+
+/* Container untuk alerts */
+#alerts-container {
+    margin-top: 20px;
+}
+
+#alerts-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+
+.jumbotron {
+    background: linear-gradient(135deg, #6e8efb, #a777e3);
+    color: white;
+    padding: 60px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    text-align: center;
+}
+.jumbotron h1 {
+    font-size: 3rem;
+    font-weight: bold;
+}
+.jumbotron p {
+    font-size: 1.25rem;
+    margin-top: 15px;
+}
+.btn-lg {
+    font-size: 1.2rem;
+    padding: 12px 25px;
+    border-radius: 8px;
+}

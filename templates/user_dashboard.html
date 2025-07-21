@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Staff Medis - LifeSync{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .patient-status {
+        padding: 0.5rem;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+    }
+    .status-normal {
+        background-color: rgba(40, 167, 69, 0.1);
+        border-left: 4px solid #28a745;
+    }
+    .shift-badge {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.6rem;
+        margin-left: 1rem;
+    }
+    .shift-active { background-color: #28a745; }
+    .shift-inactive { background-color: #6c757d; }
+    .chart-container { position: relative; height: 300px; }
+    .heart-rate-stats .badge {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.8rem;
+        margin-right: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Dashboard Staff Medis</h2>
+        <div>
+            <span class="badge shift-badge shift-active">Shift: Aktif</span>
+            <button class="btn btn-sm btn-outline-secondary" id="shift-toggle">Akhiri Shift</button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Kolom kiri -->
+        <div class="col-md-8">
+            <!-- Daftar Pasien -->
+            <div class="card mb-4">
+                <div class="card-header text-white bg-primary">
+                    <h3>Daftar Pasien yang Dipantau</h3>
+                </div>
+                <div class="card-body">
+                    {% if patients|length == 0 %}
+                    <div class="alert alert-info">Anda belum mendapatkan tugas pemantauan pasien.</div>
+                    {% else %}
+                    <div class="list-group">
+                        {% for patient in patients %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">{{ patient.full_name }}</h5>
+                                    <p class="mb-0 text-muted">ID: {{ patient.patient_identifier }}</p>
+                                </div>
+                                <div class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary mb-1" onclick="loadHeartRate('{{ patient.patient_identifier }}', '{{ patient.full_name }}')">
+                                        <i class="fas fa-chart-line"></i> Lihat Grafik
+                                    </button><br>
+                                    <button class="btn btn-sm btn-outline-secondary view-patient-details" data-patient-id="{{ patient.id }}">
+                                        Lihat Detail
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="patient-status status-normal mt-2">
+                                <span><i class="fas fa-heartbeat"></i> Status: Stabil</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Grafik Heart Rate -->
+            <div class="card mb-4">
+                <div class="card-header text-white bg-primary d-flex justify-content-between align-items-center">
+                    <h3 id="heart-rate-chart-title"><i class="fas fa-chart-line"></i> Grafik Heart Rate</h3>
+                    <span class="badge bg-light text-dark" id="active-patient-name">Pilih pasien</span>
+                </div>
+                <div class="card-body">
+                    <div id="no-data-message" class="text-center py-5">
+                        <i class="fas fa-heartbeat fa-3x text-muted mb-3"></i>
+                        <h4>Silakan pilih pasien untuk melihat data heart rate</h4>
+                        <p class="text-muted">Klik tombol "Lihat Grafik" pada salah satu pasien di daftar</p>
+                    </div>
+                    <div id="chart-container" class="chart-container" style="display: none;">
+                        <canvas id="heartRateChart"></canvas>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary">1 Jam</button>
+                        <button type="button" class="btn btn-outline-primary">6 Jam</button>
+                        <button type="button" class="btn btn-outline-primary">24 Jam</button>
+                        <button type="button" class="btn btn-outline-primary">7 Hari</button>
+                    </div>
+                    <div class="heart-rate-stats">
+                        <span class="badge bg-success">Min: <span id="min-heart-rate">--</span> BPM</span>
+                        <span class="badge bg-primary">Avg: <span id="avg-heart-rate">--</span> BPM</span>
+                        <span class="badge bg-danger">Max: <span id="max-heart-rate">--</span> BPM</span>
+                        <span class="badge bg-warning text-dark">Last: <span id="last-heart-rate">--</span> BPM</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kolom kanan -->
+        <div class="col-md-4">
+            <!-- Kepala Jaga -->
+            <div class="card mb-4">
+                <div class="card-header text-white bg-primary">
+                    <h3>Kepala Jaga</h3>
+                </div>
+                <div class="card-body">
+                    {% if head_nurse %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">{{ head_nurse.username }}</h5>
+                                <p class="mb-1 text-muted">Kepala Jaga</p>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary contact-supervisor" data-supervisor-id="{{ head_nurse.id }}">
+                                <i class="fas fa-phone-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">Belum terhubung dengan kepala jaga.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Notifikasi -->
+            <div class="card">
+                <div class="card-header text-white bg-primary">
+                    <h3>Notifikasi</h3>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">Shift Baru</h5>
+                                <small>Hari ini</small>
+                            </div>
+                            <p class="mb-1">Anda telah ditugaskan untuk memantau 3 pasien baru.</p>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">Pengingat</h5>
+                                <small>Kemarin</small>
+                            </div>
+                            <p class="mb-1">Laporan harian harus diselesaikan sebelum akhir shift.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let heartRateChart;
+function loadHeartRate(patientId, fullName) {
+    fetch(`/api/patient/${encodeURIComponent(patientId)}/heart_rate`)
+        .then(res => res.json())
+        .then(data => {
+            const labels = data.map(d => d.timestamp);
+            const values = data.map(d => d.bpm);
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
+            const lastBpm = data[data.length - 1].bpm;
+
+
+            if (heartRateChart) heartRateChart.destroy();
+            const ctx = document.getElementById('heartRateChart').getContext('2d');
+            heartRateChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `Heart Rate - ${fullName}`,
+                        data: values,
+                        borderColor: '#1bc8c8',
+                        backgroundColor: 'rgba(27, 200, 200, 0.2)',
+                        tension: 0.3,
+                        fill: true,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#1bc8c8'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#333', font: { size: 14, weight: 'bold' } }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: { color: '#555' },
+                            grid: { color: '#eee' }
+                        },
+                        x: {
+                            ticks: { color: '#555', maxRotation: 45, minRotation: 45 },
+                            grid: { color: '#f5f5f5' }
+                        }
+                    }
+                }
+            });
+
+            document.getElementById('no-data-message').style.display = 'none';
+            document.getElementById('chart-container').style.display = 'block';
+            document.getElementById('active-patient-name').innerText = fullName;
+            document.getElementById('min-heart-rate').innerText = min;
+            document.getElementById('avg-heart-rate').innerText = avg;
+            document.getElementById('max-heart-rate').innerText = max;
+            document.getElementById('last-heart-rate').innerText = lastBpm;
+
+        });
+}
+</script>
+{% endblock %}

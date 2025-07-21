@@ -1,0 +1,82 @@
+<!-- templates/index.html -->
+{% extends 'base.html' %}
+{% block title %}Welcome - LifeSync{% endblock %}
+
+{% block content %}
+    <div class="jumbotron bg-gradient" style="background: linear-gradient(135deg, #9de38f 0%, #beffbc 100%); color: #57b846; border-radius: 1rem; padding: 3rem 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-3 fw-bold">LifeSync</h1>
+                <p class="lead fs-4"> heart rate monitoring for your peace of mind.</p>
+                <hr class="my-4 bg-white opacity-50">
+                <p class="fs-5">Monitor heart rates, and receive instant notifications for anomalies. Health care made simple and accessible for everyone.</p>
+                <div class="mt-5">
+                    <a class="btn btn-light btn-lg me-3 px-4 py-2" href="{{ url_for('signup') }}" role="button">
+                        <i class="fas fa-user-plus me-2"></i>Sign Up
+                    </a>
+                    <a class="btn btn-light btn-lg me-3 px-4 py-2" href="{{ url_for('login') }}" role="button">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-4 d-none d-md-block text-center">
+                <div class="heartbeat-animation">
+                    <i class="fas fa-heartbeat fa-8x pulse-animation" style="color: #57b846;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-5">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fas fa-mobile-alt fa-3x mb-3" style="color: #57b846;"></i>
+                        <h4 class="card-title">Health Monitoring</h4>
+                        <p class="card-text">Track heart rate data with our responsive mobile and web applications.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fas fa-bell fa-3x mb-3" style="color: #57b846;"></i>
+                        <h4 class="card-title">Instant Alerts</h4>
+                        <p class="card-text">Get immediate notifications when heart rates fall outside of normal parameters.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-line fa-3x mb-3" style="color: #57b846;"></i>
+                        <h4 class="card-title">Health Analytics</h4>
+                        <p class="card-text">View detailed analytics and reports to better understand your heart health patterns.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .pulse-animation {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+{% endblock %}
